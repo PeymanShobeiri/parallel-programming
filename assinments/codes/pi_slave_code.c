@@ -12,26 +12,27 @@ double dboard (int darts);
 #define MASTER 0        /* task ID of master task */
 
 int main (int argc, char *argv[]){
-double	homepi,         /* value of pi calculated by current task */
-	pisum,	        /* sum of tasks' pi values */
-	pi,	        /* average of pi after "darts" is thrown */
-	avepi;	        /* average pi value for all iterations */
-int	taskid,	        /* task ID - also used as seed number */
-	numtasks,       /* number of tasks */
-	rc,             /* return code */
-	i;
+double  homepi,         /* value of pi calculated by current task */
+        pisum,          /* sum of tasks' pi values */
+        pi,             /* average of pi after "darts" is thrown */
+        avepi;          /* average pi value for all iterations */
+int     taskid,         /* task ID - also used as seed number */
+        numtasks,       /* number of tasks */
+        rc,             /* return code */
+        i;
 
 clock_t start_time, end_time;
 start_time = clock();
 
 MPI_Status status;
 
-MPI_Comm parent;
+MPI_Comm master;
 MPI_Init(&argc,&argv);
 
-MPI_Comm_get_parent(&parent);
-if(parent == MPI_COMM_NULL){
-   printf("No parent");
+MPI_Comm_get_parent(&master);
+
+if(master == MPI_COMM_NULL){
+   printf("No master (parent) found");
    exit(1);
 }
 
@@ -46,21 +47,21 @@ avepi = 0;
 for (i = 0; i < ROUNDS; i++) {
    homepi = dboard(DARTS/numtasks);
 
-   rc = MPI_Reduce(&homepi, &pisum, 1, MPI_DOUBLE, MPI_SUM, MASTER , parent);
+   rc = MPI_Reduce(&homepi, &pisum, 1, MPI_DOUBLE, MPI_SUM, MASTER , master);
    }
 
    end_time = clock();
-   printf("Time as a CHILD taken is %f seconds \n", ((double)(end_time - start_time))/CLOCKS_PER_SEC);
+   printf("Time for the Slave is : %f seconds \n", ((double)(end_time - start_time))/CLOCKS_PER_SEC);
    MPI_Finalize();
    return 0;
 }
 
 
 double dboard(int darts) {
-#define sqr(x)	((x)*(x))
+#define sqr(x)  ((x)*(x))
 
-	long random(void);
-double x_coord, y_coord, pi, r; 
+        long random(void);
+double x_coord, y_coord, pi, r;
 int score, n;
 unsigned int cconst;  /* must be 4-bytes in size */
 
@@ -84,4 +85,4 @@ if (sizeof(cconst) != 4) {
 
 pi = 4.0 * (double)score/(double)darts;
 return(pi);
-} 
+}
